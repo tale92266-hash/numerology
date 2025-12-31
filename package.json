@@ -1,5 +1,5 @@
 {
-  "name": "numerology-server",
+  "name": "samshad-numerology-server",
   "version": "1.0.0",
   "description": "Simple Node Server for Vercel",
   "main": "server.js",
@@ -10,6 +10,6 @@
     "express": "^4.18.2"
   },
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
