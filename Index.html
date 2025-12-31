@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samshad Numerology</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: #0f0c29;
+            background: -webkit-linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            color: #fff;
+            padding: 20px 0;
+        }
+
+        .background-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            width: 95%;
+            max-width: 480px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideUp 0.8s ease-out;
+            min-height: calc(100vh - 40px); 
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        header h1 span {
+            color: #f7b731;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 80px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            padding: 10px 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: #f7b731;
+            color: #24243e;
+            font-weight: 600;
+            box-shadow: 0 4px 10px rgba(247, 183, 49, 0.3);
+        }
+
+        main { flex: 1; width: 100%; }
+
+        .input-section { display: none; animation: fadeIn 0.5s ease; }
+        .input-section.active { display: block; }
+
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 0.85rem; color: #ddd; }
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        .input-group input:focus { border-color: #f7b731; background: rgba(255, 255, 255, 0.1); }
+        .helper-text { font-size: 0.75rem; color: #aaa; margin-top: 5px; }
+
+        .calc-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+            margin-bottom: 15px;
+        }
+        .calc-btn:active { transform: scale(0.98); }
+
+        /* Scan Button */
+        .scan-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .scan-btn {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #f7b731;
+            background: rgba(247, 183, 49, 0.1);
+            color: #f7b731;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .scan-btn:hover { background: rgba(247, 183, 49, 0.2); }
+        
+        .clear-scan-btn {
+            padding: 12px;
+            border: 1px solid #fc5c7d;
+            background: rgba(252, 92, 125, 0.1);
+            color: #fc5c7d;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: none; 
+        }
+
+        /* Spinner */
+        #scan-loader {
+            display: none;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid #f7b731;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        #scan-status {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #ccc;
+        }
+
+        /* Results List */
+        .store-results-list { list-style: none; margin-top: 15px; }
+        .store-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: slideUp 0.3s ease-out;
+        }
+        .store-item-number { font-size: 1.1rem; font-weight: 600; letter-spacing: 1px; color: #fff; }
+        .store-item-badge { background: #f7b731; color: #24243e; padding: 5px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        .load-more-btn {
+            background: transparent;
+            border: 1px solid #f7b731;
+            color: #f7b731;
+            padding: 10px;
+            width: 100%;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .load-more-btn.hidden { display: none; }
+
+        /* Result Section */
+        .result-card { margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); text-align: center; }
+        .result-card.hidden { display: none; }
+        .number-circle { width: 90px; height: 90px; background: linear-gradient(135deg, #f7b731, #fc5c7d); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 15px auto; box-shadow: 0 0 20px rgba(252, 92, 125, 0.6); }
+        #finalNumber { font-size: 3rem; font-weight: 700; color: #fff; }
+        .label-text { text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; color: #aaa; }
+        #planetName { font-size: 1.3rem; color: #f7b731; margin-bottom: 15px; }
+        .result-details { background: rgba(0, 0, 0, 0.2); border-radius: 15px; padding: 15px; margin-bottom: 20px; text-align: left; }
+        .detail-item { margin-bottom: 12px; }
+        .detail-item h4 { color: #9fa8da; font-size: 0.85rem; margin-bottom: 3px; }
+        .detail-item p { font-size: 0.9rem; line-height: 1.4; }
+        .reset-btn { background: transparent; border: 1px solid #aaa; color: #aaa; padding: 10px 25px; border-radius: 25px; cursor: pointer; font-size: 0.85rem; transition: 0.3s; display: inline-block; }
+        .reset-btn:hover { border-color: #fff; color: #fff; }
+
+        .app-footer { margin-top: auto; padding-top: 20px; text-align: center; font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .app-footer span { color: #f7b731; font-weight: 600; }
+
+        /* --- CUSTOM ALERT BOX --- */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .custom-alert-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .custom-alert-box {
+            background: rgba(30, 30, 60, 0.9);
+            width: 85%;
+            max-width: 350px;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            transform: scale(0.8);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .custom-alert-overlay.active .custom-alert-box {
+            transform: scale(1);
+        }
+
+        .custom-alert-box h3 {
+            color: #f7b731;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .custom-alert-box p {
+            font-size: 0.95rem;
+            color: #ddd;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .custom-alert-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 10px 30px;
+            border-radius: 50px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4);
+        }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (max-width: 480px) { .app-container { width: 100%; border-radius: 0; max-width: none; padding-top: 20px; padding-bottom: 20px; margin: 0; box-shadow: none; border: none; min-height: 100vh; } body { padding: 0; } }
+    </style>
+</head>
+<body>
+
+    <div class="background-overlay"></div>
+
+    <div class="app-container">
+        <header>
+            <h1>Samshad <span>Numerology</span></h1>
+            <p>Number Generator & Calculator</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" data-target="store-section">Generator</button>
+            <button class="tab-btn" data-target="number-section">Single No.</button>
+            <button class="tab-btn" data-target="name-section">Name</button>
+            <button class="tab-btn" data-target="dob-section">DOB</button>
+            <button class="tab-btn" data-target="vehicle-section">Vehicle</button>
+        </div>
+
+        <main>
+            <section id="store-section" class="input-section active">
+                
+                <div class="scan-container">
+                    <button class="scan-btn" onclick="document.getElementById('imageInput').click()">
+                        <span>📸</span> Scan Image
+                    </button>
+                    <button class="clear-scan-btn" id="clearScanBtn" onclick="clearScannedData()">
+                        ❌ Clear
+                    </button>
+                </div>
+                <input type="file" id="imageInput" accept="image/*" style="display:none" onchange="processImage(this)">
+                
+                <div id="scan-loader">
+                    <div class="spinner"></div>
+                    <div id="scan-status">Scanning... 0%</div>
+                </div>
+
+                <div class="input-group">
+                    <label for="searchPattern">Pattern (Max 10 chars, use *)</label>
+                    <input type="text" id="searchPattern" maxlength="10" 
+                           placeholder="99**55****" 
+                           oninput="this.value = this.value.replace(/[^0-9*]/g, '').slice(0, 10)"
+                           autocomplete="off">
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label for="excludeDigit">Exclude Digits</label>
+                        <input type="text" id="excludeDigit" placeholder="e.g. 4, 8" autocomplete="off">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label for="targetSum">Target Sums</label>
+                        <input type="text" id="targetSum" placeholder="e.g. 1, 6" autocomplete="off">
+                    </div>
+                </div>
+                <p class="helper-text" style="margin-top: -10px; margin-bottom: 15px;">Valid Series: 9xxx, 8xxx, 7xxx</p>
+
+                <button class="calc-btn" id="mainActionBtn" onclick="handleSearchAction()">Search / Generate</button>
+                <div id="store-count" style="text-align:center; font-size: 0.9rem; margin-bottom: 10px; color: #f7b731;"></div>
+                
+                <ul id="storeResults" class="store-results-list"></ul>
+                <button id="loadMoreBtn" class="load-more-btn hidden" onclick="generateRandomBatch()">Load More</button>
+            </section>
+
+            <section id="number-section" class="input-section">
+                <div class="input-group">
+                    <label for="numberInput">Enter Mobile (Max 10 digits)</label>
+                    <input type="text" inputmode="numeric" id="numberInput" maxlength="10" 
+                           placeholder="e.g. 9876543210" 
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"
+                           autocomplete="off">
+                </div>
+                <button class="calc-btn" onclick="calculateNumber()">Calculate</button>
+            </section>
+
+            <section id="name-section" class="input-section">
+                <div class="input-group">
+                    <label for="nameInput">Enter Full Name</label>
+                    <input type="text" id="nameInput" placeholder="e.g. Rahul Sharma" autocomplete="off">
+                </div>
+                <button class="calc-btn" onclick="calculateName()">Analyze Name</button>
+            </section>
+
+            <section id="dob-section" class="input-section">
+                <div class="input-group">
+                    <label for="dobInput">Select Birth Date</label>
+                    <input type="date" id="dobInput">
+                </div>
+                <button class="calc-btn" onclick="calculateDOB()">Reveal Life Path</button>
+            </section>
+
+            <section id="vehicle-section" class="input-section">
+                <div class="input-group">
+                    <label for="vehicleInput">Vehicle Number</label>
+                    <input type="text" id="vehicleInput" placeholder="e.g. DL 01 AB 1234" autocomplete="off">
+                </div>
+                <button class="calc-btn" onclick="calculateVehicle()">Check Lucky Number</button>
+            </section>
+
+            <div id="result-container" class="result-card hidden">
+                <div class="result-header">
+                    <span class="label-text">Total Sum</span>
+                    <div class="number-circle"><span id="finalNumber">0</span></div>
+                    <h3 id="planetName">Ruling Planet</h3>
+                </div>
+                <div class="result-details">
+                    <div class="detail-item"><h4>Characteristics</h4><p id="charText">Loading...</p></div>
+                    <div class="detail-item"><h4>Key Trait</h4><p id="keywordText">Loading...</p></div>
+                </div>
+                <button class="reset-btn" onclick="resetApp()">Check Another</button>
+            </div>
+        </main>
+
+        <div class="app-footer"><p>Created by <span>Samshad</span></p></div>
+    </div>
+
+    <div id="customAlert" class="custom-alert-overlay">
+        <div class="custom-alert-box">
+            <h3 id="alertTitle">Notification</h3>
+            <p id="alertMessage">This is a custom alert message.</p>
+            <button class="custom-alert-btn" onclick="closeAlert()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CUSTOM ALERT FUNCTION ---
+        function showAlert(message, title = "Alert") {
+            const overlay = document.getElementById('customAlert');
+            const titleEl = document.getElementById('alertTitle');
+            const msgEl = document.getElementById('alertMessage');
+            
+            titleEl.innerText = title;
+            msgEl.innerText = message;
+            
+            overlay.classList.add('active');
+        }
+
+        function closeAlert() {
+            document.getElementById('customAlert').classList.remove('active');
+        }
+
+        // Data
+        const numerologyData = {
+            1: { planet: "Sun (Surya)", traits: "Leadership, Independence", keyword: "Leader" },
+            2: { planet: "Moon (Chandra)", traits: "Sensitivity, Balance", keyword: "Peacemaker" },
+            3: { planet: "Jupiter (Guru)", traits: "Creativity, Social", keyword: "Creative" },
+            4: { planet: "Rahu", traits: "Hard Work, Stability", keyword: "Builder" },
+            5: { planet: "Mercury (Budh)", traits: "Freedom, Business", keyword: "Adventurer" },
+            6: { planet: "Venus (Shukra)", traits: "Luxury, Family", keyword: "Caregiver" },
+            7: { planet: "Ketu", traits: "Spirituality, Analysis", keyword: "Seeker" },
+            8: { planet: "Saturn (Shani)", traits: "Power, Money", keyword: "Powerhouse" },
+            9: { planet: "Mars (Mangal)", traits: "Energy, Humanitarian", keyword: "Warrior" }
+        };
+
+        const chaldeanChart = {
+            a: 1, i: 1, j: 1, q: 1, y: 1, b: 2, k: 2, r: 2, c: 3, g: 3, l: 3, s: 3,
+            d: 4, m: 4, t: 4, e: 5, h: 5, n: 5, x: 5, u: 6, v: 6, w: 6, o: 7, z: 7, f: 8, p: 8
+        };
+
+        const allowedPrefixes = [
+            "9999", "9990", "9971", "9953", "9911", "9899", "9891", "9873", "9811",
+            "9718", "9711", "9654", "9643", "9582", "9540",
+            "8860", "8826", "8802", "8750", "8745", "8744", "8743", "8742",
+            "8588", "8587", "8586", "8585", "8527", "8512", "8510", "8506", "8505",
+            "8448", "8447", "8377", "8376", "8375", "8373",
+            "7838", "7827", "7532", "7531", "7503", "7291", "7290", "7042"
+        ];
+
+        let rawScannedNumbers = []; 
+
+        // UI Helpers
+        const tabs = document.querySelectorAll('.tab-btn');
+        const sections = document.querySelectorAll('.input-section');
+        const resultContainer = document.getElementById('result-container');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.target).classList.add('active');
+                resultContainer.classList.add('hidden');
+            });
+        });
+
+        function reduceToSingleDigit(num) {
+            while (num > 9) num = num.toString().split('').reduce((acc, digit) => acc + parseInt(digit), 0);
+            return num;
+        }
+        function getDigitSum(str) {
+            let sum = 0;
+            str = str.replace(/[^0-9]/g, '');
+            for (let char of str) sum += parseInt(char);
+            return sum;
+        }
+        function getChaldeanSum(str) {
+            let sum = 0;
+            str = str.toLowerCase().replace(/[^a-z]/g, '');
+            for (let char of str) if (chaldeanChart[char]) sum += chaldeanChart[char];
+            return sum;
+        }
+
+        // --- SCANNING LOGIC ---
+        function processImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const loader = document.getElementById('scan-loader');
+            const statusEl = document.getElementById('scan-status');
+            const listEl = document.getElementById('storeResults');
+            const countDisplay = document.getElementById('store-count');
+
+            loader.style.display = 'block';
+            statusEl.innerText = "Initializing... 0%";
+            listEl.innerHTML = ''; 
+            countDisplay.innerText = '';
+            
+            rawScannedNumbers = [];
+            generatedHistory.clear();
+
+            Tesseract.recognize(
+                file,
+                'eng',
+                { logger: m => {
+                    if(m.status === 'recognizing text') {
+                        statusEl.innerText = `Scanning... ${Math.round(m.progress * 100)}%`;
+                    }
+                }}
+            ).then(({ data: { text } }) => {
+                loader.style.display = 'none';
+                const potentialNumbers = text.match(/\b\d{10}\b/g) || [];
+                
+                potentialNumbers.forEach(num => {
+                    const prefix = num.slice(0, 4);
+                    if(allowedPrefixes.includes(prefix)) {
+                        rawScannedNumbers.push(num);
+                    }
+                });
+
+                if(rawScannedNumbers.length > 0) {
+                    document.getElementById('clearScanBtn').style.display = 'block';
+                    filterAndDisplayScannedData();
+                } else {
+                    countDisplay.innerText = "No valid numbers found.";
+                    countDisplay.style.color = "#fc5c7d";
+                    showAlert("No valid 9xxx/8xxx/7xxx series numbers found in the image.", "Scan Failed");
+                }
+
+            }).catch(err => {
+                console.error(err);
+                loader.style.display = 'none';
+                countDisplay.innerText = "Error scanning image.";
+                showAlert("Something went wrong while scanning. Try a clear image.", "Error");
+            });
+        }
+
+        function clearScannedData() {
+            rawScannedNumbers = [];
+            document.getElementById('clearScanBtn').style.display = 'none';
+            document.getElementById('storeResults').innerHTML = '';
+            document.getElementById('store-count').innerText = '';
+        }
+
+        function handleSearchAction() {
+            const listEl = document.getElementById('storeResults');
+            listEl.innerHTML = ''; 
+
+            if(rawScannedNumbers.length > 0) {
+                filterAndDisplayScannedData();
+            } else {
+                startGeneration();
+            }
+        }
+
+        function filterAndDisplayScannedData() {
+            const listEl = document.getElementById('storeResults');
+            const excludeInput = document.getElementById('excludeDigit').value.trim();
+            const targetSumInput = document.getElementById('targetSum').value.trim();
+            const countDisplay = document.getElementById('store-count');
+
+            let excludedDigits = excludeInput ? excludeInput.split(/[\s,]+/).map(d => d.trim()) : [];
+            let targetSums = targetSumInput ? targetSumInput.split(/[\s,]+/).map(s => parseInt(s)).filter(n => !isNaN(n)) : [];
+
+            let matchCount = 0;
+            listEl.innerHTML = '';
+
+            rawScannedNumbers.forEach(num => {
+                let hasExcluded = false;
+                for(let d of num) {
+                    if(excludedDigits.includes(d)) { hasExcluded = true; break; }
+                }
+                if(hasExcluded) return;
+
+                const sum = getDigitSum(num);
+                const finalDigit = reduceToSingleDigit(sum);
+                if(targetSums.length > 0 && !targetSums.includes(finalDigit)) return;
+
+                const li = document.createElement('li');
+                li.className = 'store-item';
+                li.innerHTML = `
+                    <span class="store-item-number">${num}</span>
+                    <span class="store-item-badge">Sum: ${finalDigit}</span>
+                `;
+                listEl.appendChild(li);
+                matchCount++;
+            });
+
+            countDisplay.innerText = `Found ${matchCount} Matching from Scan`;
+            countDisplay.style.color = "#f7b731";
+            document.getElementById('loadMoreBtn').classList.add('hidden'); 
+            
+            if(matchCount === 0) {
+                showAlert("Numbers found in scan, but none matched your filters (Exclude/Sum).", "No Match");
+            }
+        }
+
+
+        // --- RANDOM GENERATOR LOGIC ---
+        let generatedHistory = new Set(); 
+
+        function startGeneration() {
+            generatedHistory.clear(); 
+            generateRandomBatch(); 
+        }
+
+        function generateRandomBatch() {
+            const pattern = document.getElementById('searchPattern').value.trim();
+            const excludeInput = document.getElementById('excludeDigit').value.trim();
+            const targetSumInput = document.getElementById('targetSum').value.trim();
+            const listEl = document.getElementById('storeResults');
+            const loadBtn = document.getElementById('loadMoreBtn');
+            const countDisplay = document.getElementById('store-count');
+
+            if (pattern.length === 0) {
+                showAlert("Please enter a pattern like 99**12****", "Pattern Missing");
+                return;
+            }
+
+            const userPatternStart = pattern.slice(0, 4); 
+            const validPrefixes = allowedPrefixes.filter(prefix => {
+                for(let i=0; i<4; i++) {
+                    const pChar = userPatternStart[i];
+                    if (pChar !== '*' && pChar !== undefined && pChar !== prefix[i]) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+
+            if (validPrefixes.length === 0) {
+                showAlert("The number must start with a valid 9xxx, 8xxx, or 7xxx series.", "Invalid Series");
+                return;
+            }
+
+            let excludedDigits = excludeInput ? excludeInput.split(/[\s,]+/).map(d => d.trim()) : [];
+            let targetSums = targetSumInput ? targetSumInput.split(/[\s,]+/).map(s => parseInt(s)).filter(n => !isNaN(n)) : [];
+
+            let generatedCount = 0;
+            const BATCH_SIZE = 20;
+            let attempts = 0; 
+            const MAX_SAFETY_ATTEMPTS = 5000; 
+
+            while (generatedCount < BATCH_SIZE && attempts < MAX_SAFETY_ATTEMPTS) {
+                attempts++;
+                const chosenPrefix = validPrefixes[Math.floor(Math.random() * validPrefixes.length)];
+                let newNumber = chosenPrefix; 
+                let isValid = true;
+
+                for (let i = 4; i < 10; i++) {
+                    const char = (i < pattern.length) ? pattern[i] : '*'; 
+                    if (char === '*') {
+                        let digitAttempts = 0;
+                        let randomDigit;
+                        do {
+                            randomDigit = Math.floor(Math.random() * 10).toString();
+                            digitAttempts++;
+                        } while (excludedDigits.includes(randomDigit) && digitAttempts < 20);
+                        if (excludedDigits.includes(randomDigit)) { isValid = false; break; }
+                        newNumber += randomDigit;
+                    } else {
+                        newNumber += char;
+                    }
+                }
+
+                for(let d of newNumber) {
+                    if(excludedDigits.includes(d)) { isValid = false; break; }
+                }
+
+                if (isValid && newNumber.length === 10) {
+                    const sum = getDigitSum(newNumber);
+                    const finalDigit = reduceToSingleDigit(sum);
+
+                    if (targetSums.length > 0 && !targetSums.includes(finalDigit)) isValid = false;
+                    if (generatedHistory.has(newNumber)) isValid = false;
+
+                    if (isValid) {
+                        generatedHistory.add(newNumber);
+                        const li = document.createElement('li');
+                        li.className = 'store-item';
+                        li.innerHTML = `
+                            <span class="store-item-number">${newNumber}</span>
+                            <span class="store-item-badge">Sum: ${finalDigit}</span>
+                        `;
+                        listEl.appendChild(li);
+                        generatedCount++;
+                        attempts = 0; 
+                    }
+                }
+            }
+
+            if (generatedCount < BATCH_SIZE) loadBtn.classList.add('hidden'); 
+            else loadBtn.classList.remove('hidden'); 
+            
+            const totalItems = generatedHistory.size;
+            countDisplay.innerText = `Generated ${totalItems} Unique Matches`;
+            countDisplay.style.color = "#f7b731";
+            
+            if (totalItems === 0 && generatedCount === 0) {
+                 showAlert("Could not find numbers matching your criteria. Try relaxing the filters.", "No Results");
+            }
+        }
+
+        // --- Single Calc Functions ---
+        function showResult(number) {
+            const finalDigit = reduceToSingleDigit(number);
+            const data = numerologyData[finalDigit];
+            if (!data) return;
+            resultContainer.classList.remove('hidden');
+            document.getElementById('planetName').innerText = data.planet;
+            document.getElementById('charText').innerText = data.traits;
+            document.getElementById('keywordText').innerText = data.keyword;
+            const numberElement = document.getElementById('finalNumber');
+            let currentNum = 0;
+            const interval = setInterval(() => {
+                numberElement.innerText = currentNum;
+                if (currentNum >= finalDigit) clearInterval(interval);
+                else currentNum++;
+            }, 50);
+            setTimeout(() => { resultContainer.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
+        }
+
+        function calculateNumber() {
+            const val = document.getElementById('numberInput').value;
+            if(!val) return showAlert("Please enter a valid number.", "Input Empty");
+            showResult(getDigitSum(val));
+        }
+        function calculateName() {
+            const val = document.getElementById('nameInput').value;
+            if(!val) return showAlert("Please enter a name.", "Input Empty");
+            const sum = getChaldeanSum(val);
+            if(sum === 0) return showAlert("Please enter valid letters.", "Invalid Input");
+            showResult(sum);
+        }
+        function calculateDOB() {
+            const val = document.getElementById('dobInput').value;
+            if(!val) return showAlert("Please select a date.", "Input Empty");
+            showResult(getDigitSum(val));
+        }
+        function calculateVehicle() {
+            const val = document.getElementById('vehicleInput').value;
+            if(!val) return showAlert("Please enter a vehicle number.", "Input Empty");
+            let totalSum = 0;
+            const cleanInput = val.toLowerCase().replace(/[^a-z0-9]/g, '');
+            for (let char of cleanInput) {
+                if (char >= '0' && char <= '9') totalSum += parseInt(char);
+                else if (chaldeanChart[char]) totalSum += chaldeanChart[char];
+            }
+            showResult(totalSum);
+        }
+        function resetApp() {
+            resultContainer.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
